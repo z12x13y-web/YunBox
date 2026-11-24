@@ -31,10 +31,19 @@ jobs:
           set -euo pipefail
           SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f | head -n1)"
+          [ -n "$SDKMANAGER" ] || { echo "::error::sdkmanager not found"; exit 1; }
+          ALL="$("$SDKMANAGER" --list 2>/dev/null)" || true
+          PLATFORM="$(echo "$ALL" | grep -oE 'platforms;android-37(\.[0-9]+)?' | sort -V | tail -n1 || true)"
+          NDK="$(echo "$ALL" | grep -oE 'ndk;27\.2\.12479018' | sort -V | tail -n1 || true)"
+          BUILD_TOOLS="$(echo "$ALL" | grep -oE 'build-tools;3[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n1 || true)"
+          echo "PLATFORM=$PLATFORM NDK=$NDK BUILD_TOOLS=$BUILD_TOOLS"
+          [ -n "$PLATFORM" ] || { echo "::error::android-37 platform not available"; exit 1; }
           yes 2>/dev/null | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          "$SDKMANAGER" "platforms;android-37" "ndk;27.2.12479018"
-          test -d "$SDK_ROOT/platforms/android-37"
-          test -d "$SDK_ROOT/ndk/27.2.12479018"
+          ARGS=("$PLATFORM")
+          [ -n "$NDK" ] && ARGS+=("$NDK")
+          [ -n "$BUILD_TOOLS" ] && ARGS+=("$BUILD_TOOLS")
+          "$SDKMANAGER" "${ARGS[@]}"
+          ls "$SDK_ROOT/platforms"
 
       - name: Restore signing key from history
         run: |
