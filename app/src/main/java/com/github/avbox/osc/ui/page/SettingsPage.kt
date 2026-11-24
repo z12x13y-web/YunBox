@@ -43,7 +43,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.avbox.osc.R
 import com.github.avbox.osc.io.FileUtils
 import com.github.avbox.osc.net.HttpClients
-import com.github.avbox.osc.ui.ConfigManageActivity
 import com.github.avbox.osc.ui.PlaySettingsActivity
 import com.github.avbox.osc.ui.PreferenceSettingsActivity
 import com.github.avbox.osc.ui.ThemeSettingsActivity
@@ -157,7 +156,7 @@ fun SettingsPage(
         topBarStartInset = navStart,
         titleContent = {
             Text(
-                text = stringResource(R.string.tab_mine),
+                text = stringResource(R.string.tab_settings),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -173,18 +172,8 @@ fun SettingsPage(
         ) {
             Spacer(Modifier.height(topPad - 20.dp))
 
-            AppInfoHeaderCard(versionName = versionName)
-
             SettingsGroup(title = null) {
                 SettingsCard(SettingsCardPosition.FIRST) {
-                    SettingsRow(
-                        title = stringResource(R.string.settings_config_manage),
-                        subtitle = stringResource(R.string.settings_config_manage_subtitle),
-                        iconRes = R.drawable.ic_settings_api,
-                        onClick = { ConfigManageActivity.start(context) },
-                    )
-                }
-                SettingsCard(SettingsCardPosition.MIDDLE) {
                     SettingsRow(
                         title = stringResource(R.string.settings_theme),
                         subtitle = stringResource(R.string.settings_theme_subtitle),

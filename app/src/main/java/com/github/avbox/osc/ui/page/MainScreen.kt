@@ -54,6 +54,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -95,6 +96,10 @@ import com.github.avbox.osc.util.HomeSettings
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.launch
+
+private const val NavSearchButtonSizeDp = 56
+private const val NavSearchGapDp = 8
+private const val NavSearchElevationDp = 5
 
 private enum class AppTab(@StringRes val labelRes: Int, @DrawableRes val icon: Int) {
     MEDIA(R.string.tab_media, R.drawable.ic_tab_home),
@@ -350,6 +355,7 @@ private fun MainContent() {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             FloatingNavBar(
+                                modifier = Modifier.weight(1f),
                                 backdrop = liquidBackdrop,
                                 axis = navAxis,
                                 selectedTabIndex = { pagerState.targetPage },
@@ -358,7 +364,7 @@ private fun MainContent() {
                                 config = liquidGlassConfig,
                                 interactive = { true },
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(NavSearchGapDp.dp))
                             NavSearchButton(
                                 label = searchActionLabel,
                                 glassEnabled = liquidGlassConfig.navbarEnabled,
@@ -425,12 +431,13 @@ private fun NavSearchButton(
     alphaScale: Float,
     onSearchClick: () -> Unit,
 ) {
-    val containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
-        alpha = if (glassEnabled) 0.4f * alphaScale else 1f,
+    val containerColor = MaterialTheme.colorScheme.surfaceBright.copy(
+        alpha = if (glassEnabled) (0.9f * alphaScale).coerceIn(0.55f, 1f) else 1f,
     )
     Box(
         modifier = Modifier
-            .size(NavMetrics.BAR_CROSS_DP.dp)
+            .size(NavSearchButtonSizeDp.dp)
+            .shadow(NavSearchElevationDp.dp, CircleShape, clip = false)
             .clip(CircleShape)
             .background(containerColor)
             .clickable(onClick = onSearchClick),
@@ -440,7 +447,7 @@ private fun NavSearchButton(
             painterResource(R.drawable.ic_tab_search),
             contentDescription = label,
             tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(22.dp),
         )
     }
 }

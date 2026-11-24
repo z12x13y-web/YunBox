@@ -41,7 +41,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -86,7 +85,6 @@ import com.github.avbox.osc.bean.MovieSort
 import com.github.avbox.osc.net.SiteSearch
 import com.github.avbox.osc.ui.ConfigManageActivity
 import com.github.avbox.osc.ui.PartitionListActivity
-import com.github.avbox.osc.ui.SearchActivity
 import com.github.avbox.osc.ui.components.AVBoxBottomSheet
 import com.github.avbox.osc.ui.components.AVBoxOptionMenuAction
 import com.github.avbox.osc.ui.components.AppTopBarScaffold
@@ -262,20 +260,6 @@ fun HomePage(
                     Icon(
                         painter = painterResource(R.drawable.ic_more_vert),
                         contentDescription = stringResource(R.string.search_settings),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable {
-                            context.startActivity(Intent(context, SearchActivity::class.java))
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = stringResource(R.string.common_search),
                         tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
