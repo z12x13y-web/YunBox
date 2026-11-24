@@ -105,7 +105,7 @@ ksp {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set("AVBox_${variant.buildType}.apk")
+            output.outputFileName.set("YunBox_${variant.buildType}.apk")
         }
     }
 }
