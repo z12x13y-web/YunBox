@@ -13,12 +13,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
-          gh run download 45436323240 --repo "$GITHUB_REPOSITORY" -n YunBox-release-apk -D out
+          gh run download 45511323923 --repo "$GITHUB_REPOSITORY" -n YunBox-release-apk -D out
           find out -type f
       - name: release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk-45436323240
-          name: YunBox apk 45436323240
-          body: release apk from run 45436323240
+          tag_name: apk-45511323923
+          name: YunBox apk 45511323923
+          body: release apk from run 45511323923
           files: out/**/*.apk
