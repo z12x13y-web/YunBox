@@ -1,0 +1,30 @@
+name: mika-apply
+on:
+  push:
+    paths:
+      - 'mika_tmp/apply.txt'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: compose
+        run: |
+          set -e
+          F=app/src/main/java/com/github/avbox/osc/ui/page/MainScreen.kt
+          cat mika_tmp/p1.b64 mika_tmp/p2.b64 | tr -d '[:space:]' | tr '_-' '/+' | base64 -d > /tmp/p.xz
+          xz -dc /tmp/p.xz > "$F"
+          sha256sum "$F"
+          wc -c "$F"
+      - name: commit
+        run: |
+          set -e
+          F=app/src/main/java/com/github/avbox/osc/ui/page/MainScreen.kt
+          git config user.name "mika-bot"
+          git config user.email "mika-bot@users.noreply.github.com"
+          git add "$F"
+          git commit -m "Replace MainScreen.kt: 3-tab nav bar with standalone search button"
+          git push
