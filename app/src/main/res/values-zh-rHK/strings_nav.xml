@@ -1,0 +1,5 @@
+<resources>
+    <string name="tab_media">媒體</string>
+    <string name="tab_resource">資源</string>
+    <string name="tab_settings">設定</string>
+</resources>
