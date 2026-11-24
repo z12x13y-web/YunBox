@@ -1,0 +1,5 @@
+<resources>
+    <string name="tab_media">Media</string>
+    <string name="tab_resource">Resources</string>
+    <string name="tab_settings">Settings</string>
+</resources>
