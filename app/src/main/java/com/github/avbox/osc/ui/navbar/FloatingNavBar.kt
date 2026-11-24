@@ -583,10 +583,8 @@ private fun NavTabItem(
     role: Role = Role.Tab,
 ) {
     val scale = LocalNavTabScale.current
-    val iconColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
-    else MaterialTheme.colorScheme.onSurfaceVariant
-    val textColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
-    else MaterialTheme.colorScheme.onSurfaceVariant
+    val iconColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+    val textColor = iconColor
     Column(
         modifier = modifier
             .clip(ContinuousCapsule)
@@ -611,13 +609,6 @@ private fun NavTabItem(
             tint = iconColor,
             modifier = Modifier.size(24.dp)
         )
-        if (selected) {
-            Text(
-                text = tab.label,
-                style = MaterialTheme.typography.labelSmall,
-                color = textColor,
-                maxLines = 1
-            )
-        }
+        Text(text = tab.label, style = MaterialTheme.typography.labelMedium, color = textColor, maxLines = 1)
     }
 }
