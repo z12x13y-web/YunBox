@@ -1,0 +1,22 @@
+name: mika-apply-4
+on: workflow_dispatch
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply patch
+        run: |
+          set -e
+          base64 -d mika_tmp/patch.gz.b64 | gunzip > /tmp/c.patch
+          wc -c /tmp/c.patch
+          git apply -v /tmp/c.patch
+          rm -f mika_tmp/patch.gz.b64
+          git config user.name mika-bot
+          git config user.email mika-bot@users.noreply.github.com
+          git add -A
+          git commit -m "nav: liquid glass search button; TMDB entry to settings; VOD-only config page"
+          git push
