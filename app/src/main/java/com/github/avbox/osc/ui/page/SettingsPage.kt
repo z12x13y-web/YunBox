@@ -46,6 +46,7 @@ import com.github.avbox.osc.net.HttpClients
 import com.github.avbox.osc.ui.PlaySettingsActivity
 import com.github.avbox.osc.ui.PreferenceSettingsActivity
 import com.github.avbox.osc.ui.ThemeSettingsActivity
+import com.github.avbox.osc.ui.TmdbSettingsActivity
 import com.github.avbox.osc.ui.components.AVBoxAlertDialog
 import com.github.avbox.osc.ui.components.AVBoxBottomSheet
 import com.github.avbox.osc.ui.components.AppTopBarScaffold
@@ -189,12 +190,20 @@ fun SettingsPage(
                         onClick = { PlaySettingsActivity.start(context) },
                     )
                 }
-                SettingsCard(SettingsCardPosition.LAST) {
+                SettingsCard(SettingsCardPosition.MIDDLE) {
                     SettingsRow(
                         title = stringResource(R.string.settings_preference_title),
                         subtitle = stringResource(R.string.settings_preference_subtitle),
                         iconRes = R.drawable.ic_settings_preference,
                         onClick = { PreferenceSettingsActivity.start(context) },
+                    )
+                }
+                SettingsCard(SettingsCardPosition.LAST) {
+                    SettingsRow(
+                        title = stringResource(R.string.common_tmdb),
+                        subtitle = stringResource(R.string.settings_tmdb_subtitle),
+                        iconRes = R.drawable.ic_config_tmdb,
+                        onClick = { TmdbSettingsActivity.start(context) },
                     )
                 }
             }

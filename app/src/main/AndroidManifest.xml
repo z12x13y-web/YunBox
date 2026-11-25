@@ -88,6 +88,8 @@
         <activity
             android:name=".ui.ThemeSettingsActivity" />
         <activity
+            android:name=".ui.TmdbSettingsActivity" />
+        <activity
             android:name=".ui.ConfigManageActivity"
             android:exported="true"
             android:launchMode="singleTop">

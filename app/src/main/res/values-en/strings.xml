@@ -464,6 +464,7 @@
 
     <string name="settings_config_manage">Config Management</string>
     <string name="settings_config_manage_subtitle">Import or delete subscription sources</string>
+    <string name="settings_tmdb_subtitle">Source for posters, ratings and stills</string>
     <string name="settings_theme">Theme Settings</string>
     <string name="settings_theme_subtitle">Change the app colors and effects</string>
     <string name="settings_play">Playback Settings</string>

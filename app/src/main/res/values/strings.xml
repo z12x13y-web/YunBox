@@ -464,6 +464,7 @@
 
     <string name="settings_config_manage">配置管理</string>
     <string name="settings_config_manage_subtitle">导入或删除订阅源</string>
+    <string name="settings_tmdb_subtitle">海报、评分与剧照数据源</string>
     <string name="settings_theme">主题设置</string>
     <string name="settings_theme_subtitle">修改应用的配色和效果</string>
     <string name="settings_play">播放设置</string>

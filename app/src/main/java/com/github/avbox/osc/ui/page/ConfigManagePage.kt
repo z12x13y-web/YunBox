@@ -64,13 +64,11 @@ import com.github.avbox.osc.api.ApiConfig
 import com.github.avbox.osc.ui.ConfigManageActivity
 import com.github.avbox.osc.ui.components.AVBoxAlertDialog
 import com.github.avbox.osc.ui.components.AVBoxBottomSheet
-import com.github.avbox.osc.ui.components.CapsuleSegmentedButton
 import com.github.avbox.osc.ui.components.LoadState
 import com.github.avbox.osc.ui.components.AppTopBarScaffold
 import com.github.avbox.osc.ui.components.LoadStateBox
 import com.github.avbox.osc.ui.components.LocalSheetDismiss
 import com.github.avbox.osc.ui.components.LocalSheetDismissThen
-import com.github.avbox.osc.ui.components.SegmentOption
 import com.github.avbox.osc.ui.components.SettingsCard
 import com.github.avbox.osc.ui.components.SettingsCardPosition
 import com.github.avbox.osc.ui.components.SettingsGroup
@@ -95,26 +93,18 @@ private fun badgeText(name: String, url: String, emptyText: String): String = wh
 fun ConfigManageScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val vm: ConfigManageViewModel = viewModel(factory = ConfigManageViewModel.defaultFactory())
-    var mode by rememberSaveable { mutableStateOf(ConfigMode.Vod) }
     var addDialogOpen by remember { mutableStateOf(false) }
     var repoSheetOpen by remember { mutableStateOf(false) }
     val vodItems by vm.vodItems.collectAsState()
-    val liveItems by vm.liveItems.collectAsState()
     val activeUrl by vm.activeUrl.collectAsState()
-    val liveActiveUrl by vm.liveActiveUrl.collectAsState()
-    val liveFollow by vm.liveFollow.collectAsState()
     val disabledUrls by vm.disabledUrls.collectAsState()
     val pendingSwitch by vm.pendingSwitch.collectAsState()
     val selected by vm.selected.collectAsState()
     val manageMode by vm.manageMode.collectAsState()
     val editTarget by vm.editTarget.collectAsState()
     val toastEvent by vm.toastEvent.collectAsState()
-    val tmdbState by vm.tmdbState().collectAsState()
-    val tmdbTesting by vm.tmdbTesting().collectAsState()
 
-    val isVod = mode == ConfigMode.Vod
-    val isTmdb = mode == ConfigMode.Tmdb
-    val currentItems = if (isVod) vodItems else liveItems
+    val currentItems = vodItems
 
     LaunchedEffect(toastEvent) {
         toastEvent?.let {
@@ -123,33 +113,19 @@ fun ConfigManageScreen(onNavigateBack: () -> Unit) {
         }
     }
 
-    LaunchedEffect(mode) {
+    LaunchedEffect(Unit) {
         vm.onModeChanged()
         repoSheetOpen = false
     }
 
     BackHandler(enabled = manageMode) { vm.exitManageMode() }
 
-    val canSwitchRepo = !isTmdb && if (isVod) {
-        HistoryHelper.isApiLineUrl(activeUrl)
-    } else {
-        ApiConfig.get().isLiveApiLineMode() && HistoryHelper.isLiveApiLineUrl(liveActiveUrl)
-    }
-
-    val repoEntries = if (isVod) HistoryHelper.getApiLines() else HistoryHelper.liveApiLines()
-
-    val repoActiveUrl = if (isVod) activeUrl else liveActiveUrl
+    val canSwitchRepo = HistoryHelper.isApiLineUrl(activeUrl)
+    val repoEntries = HistoryHelper.getApiLines()
+    val repoActiveUrl = activeUrl
 
     val focusManager = LocalFocusManager.current
 
-    val noSourceText = stringResource(R.string.config_no_source)
-    val vodBadge = remember(vodItems, activeUrl, noSourceText) {
-        badgeText(
-            vodItems.firstOrNull { parseSubscribe(it).url == activeUrl }?.let { parseSubscribe(it).name }.orEmpty(),
-            activeUrl,
-            noSourceText,
-        )
-    }
     AppTopBarScaffold(
         titleContent = {
             Text(
@@ -167,7 +143,7 @@ fun ConfigManageScreen(onNavigateBack: () -> Unit) {
         },
         actions = {
             AnimatedContent(
-                targetState = manageMode && currentItems.isNotEmpty() && !isTmdb,
+                targetState = manageMode && currentItems.isNotEmpty(),
                 transitionSpec = {
                     (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMedium)) +
                         scaleIn(initialScale = 0.8f, animationSpec = spring(stiffness = Spring.StiffnessMedium)))
@@ -190,11 +166,7 @@ fun ConfigManageScreen(onNavigateBack: () -> Unit) {
                             iconRes = R.drawable.ic_delete,
                             contentDescription = stringResource(R.string.common_delete),
                             enabled = selected.isNotEmpty(),
-                            onClick = {
-                                vm.deleteSelected(
-                                    if (isVod) SubscribeMode.Vod else SubscribeMode.Live,
-                                )
-                            },
+                            onClick = { vm.deleteSelected(SubscribeMode.Vod) },
                         )
                     }
                 } else {
@@ -202,24 +174,18 @@ fun ConfigManageScreen(onNavigateBack: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (!isTmdb) {
-                            if (canSwitchRepo) {
-                                TopBarActionBox(
-                                    iconRes = R.drawable.ic_switch_repo,
-                                    contentDescription = stringResource(R.string.config_switch_repo),
-                                    onClick = { repoSheetOpen = true },
-                                )
-                            }
+                        if (canSwitchRepo) {
                             TopBarActionBox(
-                                iconRes = R.drawable.ic_subscribe_add,
-                                contentDescription = if (isVod) {
-                                    stringResource(R.string.config_add_subscribe)
-                                } else {
-                                    stringResource(R.string.config_add_live_source)
-                                },
-                                onClick = { addDialogOpen = true },
+                                iconRes = R.drawable.ic_switch_repo,
+                                contentDescription = stringResource(R.string.config_switch_repo),
+                                onClick = { repoSheetOpen = true },
                             )
                         }
+                        TopBarActionBox(
+                            iconRes = R.drawable.ic_subscribe_add,
+                            contentDescription = stringResource(R.string.config_add_subscribe),
+                            onClick = { addDialogOpen = true },
+                        )
                     }
                 }
             }
@@ -228,155 +194,62 @@ fun ConfigManageScreen(onNavigateBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(top = topPad)
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = { focusManager.clearFocus() })
                 },
         ) {
-            CapsuleSegmentedButton(
-                options = listOf(
-                    SegmentOption(
-                        label = stringResource(R.string.common_vod),
-                        value = ConfigMode.Vod,
-                        iconPainter = painterResource(R.drawable.ic_config_vod),
+            if (currentItems.isEmpty()) {
+                LoadStateBox(
+                    state = LoadState.Empty,
+                    emptyText = stringResource(R.string.config_empty_subscribe),
+                    errorText = "",
+                    retryText = "",
+                    emptyIconRes = R.drawable.ic_empty_record,
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                )
+            } else {
+                val ordered = remember(currentItems, activeUrl) {
+                    currentItems.sortedByDescending { parseSubscribe(it).url == activeUrl }
+                }
+                LazyColumn(
+                    state = rememberLazyListState(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clearFocusOnDrag(focusManager),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 24.dp,
+                        bottom = 8.dp,
                     ),
-                    SegmentOption(
-                        label = stringResource(R.string.common_tmdb),
-                        value = ConfigMode.Tmdb,
-                        iconPainter = painterResource(R.drawable.ic_config_tmdb),
-                    ),
-                    SegmentOption(
-                        label = stringResource(R.string.common_live),
-                        value = ConfigMode.Live,
-                        iconPainter = painterResource(R.drawable.ic_config_live),
-                    ),
-                ),
-                selectedValue = mode,
-                onOptionSelected = { mode = it },
-                containerColor = MaterialTheme.colorScheme.surfaceBright,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = topPad + 8.dp),
-            )
-            AnimatedContent(
-                targetState = mode,
-                transitionSpec = {
-                    val toRight = targetState.ordinal > initialState.ordinal
-                    (
-                        slideInHorizontally(spring(stiffness = Spring.StiffnessMedium)) { full ->
-                            if (toRight) full / 4 else -full / 4
-                        } + fadeIn(spring(stiffness = Spring.StiffnessMedium))
-                        ).togetherWith(
-                        slideOutHorizontally(spring(stiffness = Spring.StiffnessMedium)) { full ->
-                            if (toRight) -full / 4 else full / 4
-                        } + fadeOut(spring(stiffness = Spring.StiffnessMedium))
-                    )
-                },
-                label = "configSegment",
-            ) { m ->
-                val vodMode = m == ConfigMode.Vod
-                val configItems = if (vodMode) vodItems else liveItems
-                if (m == ConfigMode.Tmdb) {
-                    ConfigTmdbScreen(
-                        state = tmdbState,
-                        actions = remember(vm) { vm.tmdbActions() },
-                        testing = tmdbTesting,
-                    )
-                } else if (configItems.isEmpty()) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        if (!vodMode) {
-                            FollowVodCard(
-                                checked = liveFollow,
-                                subtitle = if (activeUrl.isEmpty()) {
-                                    stringResource(R.string.config_no_vod_source)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(ordered, key = { "Vod#$it" }) { value ->
+                        val item = parseSubscribe(value)
+                        val inUse = item.url == activeUrl ||
+                            HistoryHelper.isApiLineSourceOf(item.url, activeUrl)
+                        SubscribeCard(
+                            modifier = Modifier.animateItem(),
+                            item = item,
+                            active = inUse,
+                            disabled = item.url in disabledUrls,
+                            manageMode = manageMode,
+                            selected = value in selected,
+                            onClick = {
+                                if (manageMode) {
+                                    vm.toggleSelected(value)
                                 } else {
-                                    stringResource(R.string.config_current_vod_source, vodBadge)
-                                },
-                                onFollow = { vm.followLiveNow() },
-                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 12.dp),
-                            )
-                        }
-                        LoadStateBox(
-                            state = LoadState.Empty,
-                            emptyText = stringResource(
-                                if (vodMode) R.string.config_empty_subscribe
-                                else R.string.config_empty_live_source
-                            ),
-                            errorText = "",
-                            retryText = "",
-                            emptyIconRes = R.drawable.ic_empty_record,
-                            modifier = Modifier.fillMaxWidth().weight(1f),
+                                    vm.requestSwitch(item, true)
+                                }
+                            },
+                            onLongClick = {
+                                vm.longPressSelect(value)
+                            },
+                            onCheckedChange = { checked ->
+                                if (checked) vm.requestSwitch(item, true)
+                            },
                         )
-                    }
-                } else {
-                    val ordered = remember(configItems, activeUrl, liveActiveUrl, liveFollow, vodMode) {
-                        configItems.sortedByDescending {
-                            val url = parseSubscribe(it).url
-                            if (vodMode) url == activeUrl else !liveFollow && url == liveActiveUrl
-                        }
-                    }
-                    LazyColumn(
-                        state = rememberLazyListState(),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clearFocusOnDrag(focusManager),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 24.dp,
-                            bottom = 8.dp,
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        if (!vodMode) {
-                            item(key = "Live#follow") {
-                                FollowVodCard(
-                                    checked = liveFollow,
-                                    subtitle = if (activeUrl.isEmpty()) {
-                                        stringResource(R.string.config_no_vod_source)
-                                    } else {
-                                        stringResource(R.string.config_current_vod_source, vodBadge)
-                                    },
-                                    onFollow = { vm.followLiveNow() },
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-                        }
-                        items(ordered, key = { "${m.name}#$it" }) { value ->
-                            val item = parseSubscribe(value)
-                            val inUse = if (vodMode) {
-                                item.url == activeUrl || HistoryHelper.isApiLineSourceOf(item.url, activeUrl)
-                            } else {
-                                !liveFollow && (
-                                    item.url == liveActiveUrl ||
-                                        HistoryHelper.isLiveApiLineSourceOf(item.url, liveActiveUrl)
-                                    )
-                            }
-                            SubscribeCard(
-                                modifier = Modifier.animateItem(),
-                                item = item,
-                                active = inUse,
-                                disabled = item.url in disabledUrls,
-                                manageMode = manageMode,
-                                selected = value in selected,
-                                onClick = {
-                                    if (manageMode) {
-                                        vm.toggleSelected(value)
-                                    } else {
-                                        vm.requestSwitch(item, vodMode)
-                                    }
-                                },
-                                onLongClick = {
-                                    vm.longPressSelect(value)
-                                },
-                                onCheckedChange = { checked ->
-                                    if (checked) {
-                                        vm.requestSwitch(item, vodMode)
-                                    } else if (!vodMode) {
-                                        vm.followLiveNow()
-                                    }
-                                },
-                            )
-                        }
                     }
                 }
             }
@@ -387,11 +260,11 @@ fun ConfigManageScreen(onNavigateBack: () -> Unit) {
     if (addDialogOpen || editing != null) {
         AddSubscribeDialog(
             title = if (editing != null) {
-                if (isVod) stringResource(R.string.config_edit_subscribe) else stringResource(R.string.config_edit_live_source)
+                stringResource(R.string.config_edit_subscribe)
             } else {
-                if (isVod) stringResource(R.string.config_add_subscribe) else stringResource(R.string.config_add_live_source)
+                stringResource(R.string.config_add_subscribe)
             },
-            urlSupportingText = if (isVod) "" else stringResource(R.string.config_live_source_hint),
+            urlSupportingText = "",
             initialName = editing?.name.orEmpty(),
             initialUrl = editing?.url.orEmpty(),
             onDismiss = {
@@ -399,7 +272,7 @@ fun ConfigManageScreen(onNavigateBack: () -> Unit) {
                 vm.closeEdit()
             },
             onSave = { name, url ->
-                if (editing != null) vm.commitEdit(isVod, editing, name, url) else vm.commitAdd(isVod, name, url)
+                if (editing != null) vm.commitEdit(true, editing, name, url) else vm.commitAdd(true, name, url)
                 addDialogOpen = false
             },
             onPickFile = { onPicked ->
@@ -441,7 +314,7 @@ fun ConfigManageScreen(onNavigateBack: () -> Unit) {
                 val name = HistoryHelper.apiLineName(
                     repoEntries.firstOrNull { HistoryHelper.apiLineUrl(it) == url }.orEmpty(),
                 )
-                vm.requestSwitch(SubscribeSource(name, url), isVod)
+                vm.requestSwitch(SubscribeSource(name, url), true)
                 if (vm.pendingSwitch.value != null) repoSheetOpen = false
             },
         )
@@ -507,26 +380,6 @@ private fun RepoSwitchSheet(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun FollowVodCard(
-    checked: Boolean,
-    subtitle: String,
-    onFollow: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SettingsCard(position = SettingsCardPosition.SINGLE, modifier = modifier) {
-        SettingsSwitchRow(
-            title = stringResource(R.string.live_follow_vod_source),
-            leadingIconRes = R.drawable.ic_subscribe_source,
-            subtitle = subtitle,
-            subtitleMaxLines = 1,
-            checked = checked,
-            onCheckedChange = { next -> if (next) onFollow() },
-            modifier = Modifier.padding(vertical = 6.dp),
-        )
     }
 }
 

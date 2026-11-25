@@ -12,6 +12,8 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -88,18 +90,25 @@ import com.github.avbox.osc.ui.navbar.GlassTabItem
 import com.github.avbox.osc.ui.navbar.NavAxis
 import com.github.avbox.osc.ui.navbar.NavMetrics
 import com.github.avbox.osc.ui.settings.UiSettingsState
+import com.github.avbox.osc.ui.theme.LiquidGlassConfig
 import com.github.avbox.osc.ui.theme.LiquidGlassState
 import com.github.avbox.osc.ui.SearchActivity
 import com.github.avbox.osc.util.ActivityStack
 import com.github.avbox.osc.boot.BootGuard
 import com.github.avbox.osc.util.HomeSettings
+import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.blur
+import com.kyant.backdrop.effects.colorControls
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.Shadow
 import kotlinx.coroutines.launch
 
 private const val NavSearchButtonSizeDp = 56
 private const val NavSearchGapDp = 8
-private const val NavSearchElevationDp = 5
 
 private enum class AppTab(@StringRes val labelRes: Int, @DrawableRes val icon: Int) {
     MEDIA(R.string.tab_media, R.drawable.ic_tab_home),
@@ -366,9 +375,9 @@ private fun MainContent() {
                             )
                             Spacer(modifier = Modifier.width(NavSearchGapDp.dp))
                             NavSearchButton(
+                                backdrop = liquidBackdrop,
+                                config = liquidGlassConfig,
                                 label = searchActionLabel,
-                                glassEnabled = liquidGlassConfig.navbarEnabled,
-                                alphaScale = liquidGlassConfig.containerAlphaScale,
                                 onSearchClick = openSearch,
                             )
                         }
@@ -387,9 +396,9 @@ private fun MainContent() {
                                 interactive = { true },
                             )
                             NavSearchButton(
+                                backdrop = liquidBackdrop,
+                                config = liquidGlassConfig,
                                 label = searchActionLabel,
-                                glassEnabled = liquidGlassConfig.navbarEnabled,
-                                alphaScale = liquidGlassConfig.containerAlphaScale,
                                 onSearchClick = openSearch,
                             )
                         }
@@ -426,21 +435,52 @@ private fun MainContent() {
 
 @Composable
 private fun NavSearchButton(
+    backdrop: Backdrop,
+    config: LiquidGlassConfig,
     label: String,
-    glassEnabled: Boolean,
-    alphaScale: Float,
     onSearchClick: () -> Unit,
 ) {
-    val containerColor = MaterialTheme.colorScheme.surfaceBright.copy(
-        alpha = if (glassEnabled) (0.9f * alphaScale).coerceIn(0.55f, 1f) else 1f,
+    val isBlurEnabled = config.navbarEnabled
+    val isLightTheme = !isSystemInDarkTheme()
+    val containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+        alpha = if (isBlurEnabled) 0.4f * config.containerAlphaScale else 1f,
     )
     Box(
         modifier = Modifier
             .size(NavSearchButtonSizeDp.dp)
-            .shadow(NavSearchElevationDp.dp, CircleShape, clip = false)
-            .clip(CircleShape)
-            .background(containerColor)
-            .clickable(onClick = onSearchClick),
+            .drawBackdrop(
+                backdrop = backdrop,
+                shape = { CircleShape },
+                effects = {
+                    if (isBlurEnabled) {
+                        colorControls(
+                            brightness = config.contentBrightness,
+                            contrast = config.contentContrast,
+                            saturation = config.contentSaturation,
+                        )
+                        blur(config.blurDp.dp.toPx())
+                        lens(
+                            config.distortionDp.dp.toPx(),
+                            config.distortionDp.dp.toPx(),
+                            chromaticAberration = config.dispersion,
+                        )
+                    }
+                },
+                highlight = {
+                    Highlight.Default.copy(alpha = if (isBlurEnabled) 1f else 0f)
+                },
+                shadow = {
+                    Shadow.Default.copy(
+                        color = Color.Black.copy(if (isLightTheme) 0.1f else 0.2f),
+                    )
+                },
+                onDrawSurface = { drawRect(containerColor) },
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onSearchClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
